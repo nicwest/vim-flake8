@@ -138,7 +138,7 @@ function! s:Flake8()  " {{{
     " perform the grep itself
     let &grepformat="%f:%l:%c: %m\,%f:%l: %m"
     let &grepprg=s:flake8_cmd
-    silent! grep! "%"
+    silent! grep! "."
 
     " restore grep settings
     let &grepformat=l:old_gfm
