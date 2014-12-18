@@ -1,5 +1,9 @@
 vim-flake8
 ==========
+**This is a slimmed down fork that just provides the ability to populate a quick
+fix list with the project/cwd flake8 errors. It doesn't provide any marking
+functionality. The original is here: https://github.com/nvie/vim-flake8**
+
 `vim-flake8` is a Vim plugin that runs the currently open file through Flake8,
 a static syntax and style checker for Python source code.  It supersedes both
 [vim-pyflakes](https://github.com/nvie/vim-pyflakes) and
