@@ -14,12 +14,6 @@ function! flake8#Flake8()
     call s:Flake8()
     call s:Warnings()
 endfunction
-
-function! flake8#Flake8UnplaceMarkers()
-    call s:UnplaceMarkers()
-    call s:Warnings()
-endfunction
-
 "" }}}
 
 "" ** internal ** {{{
@@ -75,32 +69,6 @@ function! s:Setup()  " {{{
     call s:DeclareOption('flake8_quickfix_location', '', '"belowright"')
     call s:DeclareOption('flake8_quickfix_height', '', 5)
     call s:DeclareOption('flake8_show_quickfix', '', 1)
-    " markers to show
-    call s:DeclareOption('flake8_show_in_gutter', '',   0)
-    call s:DeclareOption('flake8_show_in_file', '',   0)
-    call s:DeclareOption('flake8_max_markers', '', 500)
-    " marker signs
-    call s:DeclareOption('flake8_error_marker', '', '"E>"')
-    call s:DeclareOption('flake8_warning_marker', '', '"W>"')
-    call s:DeclareOption('flake8_pyflake_marker', '', '"F>"')
-    call s:DeclareOption('flake8_complexity_marker', '', '"C>"')
-    call s:DeclareOption('flake8_naming_marker', '', '"N>"')
-
-    "" setup markerdata
-
-    if !exists('s:markerdata')
-        let s:markerdata = {}
-        let s:markerdata['E'] = {'name': 'Flake8_Error'}
-        let s:markerdata['W'] = {'name': 'Flake8_Warning'}
-        let s:markerdata['F'] = {'name': 'Flake8_PyFlake'}
-        let s:markerdata['C'] = {'name': 'Flake8_Complexity'}
-        let s:markerdata['N'] = {'name': 'Flake8_Nameing'}
-    endif
-    let s:markerdata['E'].marker = s:flake8_error_marker
-    let s:markerdata['W'].marker = s:flake8_warning_marker
-    let s:markerdata['F'].marker = s:flake8_pyflake_marker
-    let s:markerdata['C'].marker = s:flake8_complexity_marker
-    let s:markerdata['N'].marker = s:flake8_naming_marker
 endfunction  " }}}
 
 "" do flake8
@@ -149,10 +117,6 @@ function! s:Flake8()  " {{{
     let l:results=getqflist()
     let l:has_results=results != []
     if l:has_results
-        " markers
-        if !s:flake8_show_in_gutter == 0 || !s:flake8_show_in_file == 0
-            call s:PlaceMarkers(l:results)
-        endif
         " quickfix
         if !s:flake8_show_quickfix == 0
             " open cwindow
@@ -174,74 +138,6 @@ function! s:Flake8()  " {{{
     endif
 endfunction  " }}}
 
-"" markers
-
-function! s:PlaceMarkers(results)  " {{{
-    " in gutter?
-    if !s:flake8_show_in_gutter == 0
-        " define signs
-        for val in values(s:markerdata)
-            if val.marker != ''
-                execute "sign define ".val.name." text=".val.marker." texthl=".val.name
-            endif
-        endfor
-    endif
-
-    " place
-    let l:index0 = 100
-    let l:index  = l:index0
-    for result in a:results
-        if l:index >= (s:flake8_max_markers+l:index0)
-            break
-        endif
-        let l:type = strpart(result.text, 0, 1)
-        if has_key(s:markerdata, l:type) && s:markerdata[l:type].marker != ''
-            " file markers
-            if !s:flake8_show_in_file == 0
-                if !has_key(s:markerdata[l:type], 'matchstr')
-                    let s:markerdata[l:type].matchstr = '\%('
-                else
-                    let s:markerdata[l:type].matchstr .= '\|'
-                endif
-                let s:markerdata[l:type].matchstr .= '\%'.result.lnum.'l\%'.result.col.'c'
-            endif
-            " gutter markers
-            if !s:flake8_show_in_gutter == 0
-                execute ":sign place ".index." name=".s:markerdata[l:type].name
-                            \ . " line=".result.lnum." file=".expand("%:p")
-                let s:signids += [l:index]
-            endif
-            let l:index += 1
-        endif
-    endfor
-
-    " in file?
-    if !s:flake8_show_in_file == 0
-        for l:val in values(s:markerdata)
-            if l:val.marker != '' && has_key(l:val, 'matchstr')
-                let l:val.matchid = matchadd(l:val.name, l:val.matchstr.'\)')
-            endif
-        endfor
-    endif
-endfunction  " }}}
-
-function! s:UnplaceMarkers()  " {{{
-    " gutter markers
-    if exists('s:signids')
-        for i in s:signids
-            execute ":sign unplace ".i
-        endfor
-        unlet s:signids
-    endif
-    " file markers
-    for l:val in values(s:markerdata)
-        if has_key(l:val, 'matchid')
-            call matchdelete(l:val.matchid)
-            unlet l:val.matchid
-            unlet l:val.matchstr
-        endif
-    endfor
-endfunction  " }}}
 
 "" }}}
 
